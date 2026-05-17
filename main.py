@@ -3,6 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import json
+from dataclasses import dataclass
+from typing import Optional
+from jax.numpy import ndarray
 
 # The race schedule-making algorithm
 import race_selection
@@ -43,9 +46,15 @@ class TournamentState(BaseModel):
     history: list = []  # Stack for undo functionality
     hyperparameters: dict = HYPERPARAMETER_DEFAULTS.copy()
     modifiers: list = [] # [{"channel": int, "short_text": str, "description": str}, ...]
-    super_pools = None
 
 app_state = TournamentState()
+
+
+@dataclass
+class BackendCache:
+    super_pools:Optional[ndarray] = None
+
+backend_cache = BackendCache()
 
 
 # Points map (Mario Kart style points can be adjusted here)
@@ -140,7 +149,7 @@ async def generate_tournament(
     print(A)
     print(C)
 
-    app_state.super_pools = super_pools # safe the super pools so we can reuse them later for adding and dropping players
+    backend_cache.super_pools = super_pools # safe the super pools so we can reuse them later for adding and dropping players
 
     kwargs_ordering = {
         'steps':app_state.hyperparameters['num_steps'],
